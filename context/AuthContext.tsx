@@ -7,16 +7,13 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged,
-  Auth,
-  getAuth
+  onAuthStateChanged
 } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
 import { createUser } from '../lib/firestore';
 import type { UserData } from '../lib/firestore';
 import Cookies from 'js-cookie';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
-import { app } from '../firebase/config';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
@@ -30,18 +27,12 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({} as AuthContextType);
-
-export function useAuth() {
-  return useContext(AuthContext);
-}
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -58,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return unsubscribe;
-  }, [auth, db]);
+  }, []);
 
   const signUp = async (
     email: string, 
@@ -93,19 +84,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string, userType: 'student' | 'admin') => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      const { user } = userCredential;
       
       // Get user data from Firestore
       const userDoc = await getDoc(doc(db, 'users', user.uid));
-      const userData = userDoc.data() as UserData;
-
-      // Check if user type matches
-      if (userData.role !== userType) {
-        throw new Error(`Access denied. This account is not authorized as ${userType}.`);
+      if (userDoc.exists()) {
+        const userData = userDoc.data() as UserData;
+        if (userData.role !== userType) {
+          throw new Error('Invalid user type');
+        }
       }
-
-      setUser(user);
-      setUserData(userData);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -115,25 +103,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await signOut(auth);
-      setUserData(null);
+      Cookies.remove('userType');
     } catch (error) {
       console.error('Logout error:', error);
       throw error;
     }
   };
 
-  const value = {
-    user,
-    userData,
-    loading,
-    signUp,
-    login,
-    logout
-  };
-
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, userData, loading, signUp, login, logout }}>
+      {children}
     </AuthContext.Provider>
   );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 } 
