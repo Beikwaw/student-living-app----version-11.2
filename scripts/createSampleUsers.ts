@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, Timestamp } from 'firebase/firestore';
 import * as dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
@@ -49,7 +49,7 @@ interface UserData {
   email: string;
   name: string;
   role: string;
-  createdAt: string;
+  createdAt: Date;
   requestDetails?: RequestDetails;
 }
 
@@ -98,21 +98,27 @@ async function createUser(user: typeof sampleUsers[0]) {
 
     console.log(`Created auth user: ${user.email}`);
 
-    // Create user document in Firestore
-    const userData: UserData = {
+    // Create base user data
+    const baseData = {
       id: userCredential.user.uid,
       email: user.email,
       name: user.name,
       role: user.role,
-      createdAt: new Date().toISOString()
+      createdAt: Timestamp.fromDate(new Date())
     };
 
-    // Only add requestDetails if it's not null
-    if (user.requestDetails !== null) {
-      userData.requestDetails = user.requestDetails;
-    }
+    // Create Firestore data with or without requestDetails
+    const firestoreData = user.requestDetails 
+      ? {
+          ...baseData,
+          requestDetails: {
+            ...user.requestDetails,
+            dateSubmitted: Timestamp.fromDate(user.requestDetails.dateSubmitted)
+          }
+        }
+      : baseData;
 
-    await setDoc(doc(db, 'users', userCredential.user.uid), userData);
+    await setDoc(doc(db, 'users', userCredential.user.uid), firestoreData);
 
     console.log(`Created Firestore document for user: ${user.email}`);
     return true;
@@ -121,6 +127,7 @@ async function createUser(user: typeof sampleUsers[0]) {
       console.log(`User ${user.email} already exists, skipping...`);
       return true;
     }
+    console.error(`Failed to create user ${user.email}:`, error);
     throw error;
   }
 }

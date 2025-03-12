@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "create-users": "NODE_OPTIONS='--loader ts-node/esm' ts-node --esm ./scripts/createSampleUsers.ts"
+    "create-users": "NODE_OPTIONS='--loader ts-node/esm' ts-node --esm ./scripts/createSampleUsers.ts",
+    "delete-users": "NODE_OPTIONS='--loader ts-node/esm' ts-node --esm ./scripts/deleteUsers.ts"
   },
   "dependencies": {
     "critters": "^0.0.23",
