@@ -7,10 +7,9 @@ import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Student Living App',
   description: 'A modern student living management application',
-  metadataBase: new URL('http://localhost:3000'),
 }
 
 export const dynamic = 'force-dynamic'

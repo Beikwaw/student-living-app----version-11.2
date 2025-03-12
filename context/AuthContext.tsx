@@ -38,9 +38,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setUserData(userDoc.data() as UserData);
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            // Ensure dates are properly serialized
+            const serializedData: UserData = {
+              id: user.uid,
+              email: user.email!,
+              name: data.name,
+              role: data.role,
+              createdAt: data.createdAt?.toDate() || new Date(),
+              applicationStatus: data.applicationStatus,
+              requestDetails: data.requestDetails ? {
+                ...data.requestDetails,
+                dateSubmitted: data.requestDetails.dateSubmitted?.toDate() || new Date()
+              } : undefined,
+              communicationLog: data.communicationLog?.map((log: any) => ({
+                ...log,
+                timestamp: log.timestamp?.toDate() || new Date()
+              }))
+            };
+            setUserData(serializedData);
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          setUserData(null);
         }
       } else {
         setUserData(null);
@@ -48,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    return unsubscribe;
+    return () => unsubscribe();
   }, []);
 
   const signUp = async (
