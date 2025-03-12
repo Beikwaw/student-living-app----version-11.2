@@ -50,6 +50,7 @@ interface UserData {
   name: string;
   role: string;
   createdAt: Date;
+  isApproved: boolean;
   requestDetails?: RequestDetails;
 }
 
@@ -104,7 +105,8 @@ async function createUser(user: typeof sampleUsers[0]) {
       email: user.email,
       name: user.name,
       role: user.role,
-      createdAt: Timestamp.fromDate(new Date())
+      createdAt: Timestamp.fromDate(new Date()),
+      isApproved: true // Set all users as approved by default
     };
 
     // Create Firestore data with or without requestDetails
