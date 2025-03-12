@@ -4,9 +4,6 @@ const nextConfig = {
   images: {
     domains: ['firebasestorage.googleapis.com'],
   },
-  experimental: {
-    serverActions: true,
-  },
   webpack: (config) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,
@@ -18,4 +15,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig; 
+module.exports = nextConfig; 
