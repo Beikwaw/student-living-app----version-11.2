@@ -1,9 +1,7 @@
 'use client';
 
-export const dynamic = 'force-dynamic'
-
 import React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { UserCircle, LogOut } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -15,13 +13,10 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { login } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(false);
-
-  const userType = (searchParams && searchParams.get('type')) || 'student';
-  const title = userType === 'admin' ? 'Admin Login' : 'Student Login';
+  const [userType, setUserType] = React.useState<'student' | 'admin'>('student');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -32,11 +27,11 @@ export default function LoginPage() {
     const password = formData.get('password') as string;
 
     try {
-      await login(email, password, userType as 'student' | 'admin');
+      await login(email, password, userType);
       router.push(userType === 'admin' ? '/admin' : '/dashboard');
       toast({
         title: "Success",
-        description: "Welcome back!",
+        description: `Welcome back, ${userType === 'admin' ? 'Admin' : 'Student'}!`,
       });
     } catch (error) {
       toast({
@@ -57,7 +52,7 @@ export default function LoginPage() {
             <div className="bg-primary rounded-full w-8 h-8 flex items-center justify-center">
               <UserCircle className="h-4 w-4 text-white" />
             </div>
-            <span className="font-bold text-xl">My Domain {userType === 'admin' ? 'Admin' : 'Student'}</span>
+            <span className="font-bold text-xl">My Domain Student Living</span>
           </div>
           <Link href="/">
             <Button variant="ghost">
@@ -71,40 +66,59 @@ export default function LoginPage() {
       <main className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">{title}</CardTitle>
+            <CardTitle className="text-2xl">Welcome to My Domain</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder={`${userType}@example.com`}
-                  required
-                />
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => setUserType('student')} 
+                  variant={userType === 'student' ? 'default' : 'outline'}
+                  className="flex-1"
+                >
+                  Student Login
+                </Button>
+                <Button 
+                  onClick={() => setUserType('admin')} 
+                  variant={userType === 'admin' ? 'default' : 'outline'}
+                  className="flex-1"
+                >
+                  Admin Login
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-                    Logging in...
-                  </div>
-                ) : (
-                  'Login'
-                )}
-              </Button>
-            </form>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder={userType === 'admin' ? "admin@mydomain.com" : "student@example.com"}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                      Logging in...
+                    </div>
+                  ) : (
+                    `Login as ${userType === 'admin' ? 'Admin' : 'Student'}`
+                  )}
+                </Button>
+              </form>
+            </div>
           </CardContent>
         </Card>
       </main>

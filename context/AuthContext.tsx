@@ -111,12 +111,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Get user data from Firestore
       const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data() as UserData;
-        if (userData.role !== userType) {
-          throw new Error('Invalid user type');
-        }
+      if (!userDoc.exists()) {
+        throw new Error('User data not found');
       }
+      
+      const data = userDoc.data();
+      if (data.role !== userType) {
+        throw new Error('Invalid user type');
+      }
+
+      // Set user data in state
+      const serializedData: UserData = {
+        id: user.uid,
+        email: user.email!,
+        name: data.name,
+        role: data.role,
+        createdAt: data.createdAt?.toDate() || new Date(),
+        applicationStatus: data.applicationStatus,
+        requestDetails: data.requestDetails ? {
+          ...data.requestDetails,
+          dateSubmitted: data.requestDetails.dateSubmitted?.toDate() || new Date()
+        } : undefined,
+        communicationLog: data.communicationLog?.map((log: any) => ({
+          ...log,
+          timestamp: log.timestamp?.toDate() || new Date()
+        }))
+      };
+      setUserData(serializedData);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
