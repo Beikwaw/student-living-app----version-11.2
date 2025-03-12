@@ -1,22 +1,19 @@
 import React from 'react'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { AuthProvider } from '../context/AuthContext'
+import { AuthProvider } from '@/context/AuthContext'
+import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata: Metadata = {
-  title: 'MDO - Student Living App',
-  description: 'MDO Student Living Application - Your one-stop platform for student accommodation and services',
-  keywords: 'MDO, student living, accommodation, student services',
-  openGraph: {
-    title: 'MDO - Student Living App',
-    description: 'MDO Student Living Application - Your one-stop platform for student accommodation and services',
-    siteName: 'MDO',
-    type: 'website',
-  },
+export const metadata = {
+  title: 'Student Living App',
+  description: 'A modern student living management application',
+  metadataBase: new URL('http://localhost:3000'),
 }
+
+export const dynamic = 'force-dynamic'
 
 export default function RootLayout({
   children,
@@ -26,7 +23,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   )

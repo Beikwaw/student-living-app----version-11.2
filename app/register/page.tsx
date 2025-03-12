@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic'
+
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
@@ -20,7 +22,7 @@ export default function RegisterPage() {
     try {
       setError('');
       setLoading(true);
-      await signUp(email, password, name, {
+      await signUp(email, password, name, 'student', {
         accommodationType,
         location,
       });

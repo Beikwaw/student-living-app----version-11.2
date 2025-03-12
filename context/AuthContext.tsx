@@ -8,61 +8,68 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  Auth
+  Auth,
+  getAuth
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { createUser } from '../lib/firestore';
 import type { UserData } from '../lib/firestore';
 import Cookies from 'js-cookie';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { app } from '../firebase/config';
 
 interface AuthContextType {
   user: User | null;
+  userData: UserData | null;
   loading: boolean;
-  signUp: (email: string, password: string, name: string, requestDetails?: {
+  signUp: (email: string, password: string, name: string, role: 'student' | 'admin', requestDetails?: {
     accommodationType: string;
     location: string;
   }) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, userType: 'student' | 'admin') => Promise<void>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  return useContext(AuthContext);
+}
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && auth) {
-      const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        setUser(user);
-        if (user) {
-          const token = await user.getIdToken();
-          Cookies.set('token', token);
-        } else {
-          Cookies.remove('token');
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          setUserData(userDoc.data() as UserData);
         }
-        setLoading(false);
-      });
-
-      return () => unsubscribe();
-    } else {
+      } else {
+        setUserData(null);
+      }
       setLoading(false);
-    }
-  }, []);
+    });
+
+    return unsubscribe;
+  }, [auth, db]);
 
   const signUp = async (
     email: string, 
     password: string, 
     name: string,
+    role: 'student' | 'admin',
     requestDetails?: {
       accommodationType: string;
       location: string;
     }
   ) => {
-    if (!auth) throw new Error('Auth is not initialized');
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const { user } = userCredential;
@@ -71,41 +78,57 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         id: user.uid,
         email: user.email!,
         name,
-        role: 'user',
+        role,
         requestDetails: requestDetails ? {
           ...requestDetails,
           dateSubmitted: new Date()
         } : undefined
       });
     } catch (error) {
+      console.error('Signup error:', error);
       throw error;
     }
   };
 
-  const signIn = async (email: string, password: string) => {
-    if (!auth) throw new Error('Auth is not initialized');
+  const login = async (email: string, password: string, userType: 'student' | 'admin') => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Get user data from Firestore
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const userData = userDoc.data() as UserData;
+
+      // Check if user type matches
+      if (userData.role !== userType) {
+        throw new Error(`Access denied. This account is not authorized as ${userType}.`);
+      }
+
+      setUser(user);
+      setUserData(userData);
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   };
 
   const logout = async () => {
-    if (!auth) throw new Error('Auth is not initialized');
     try {
       await signOut(auth);
+      setUserData(null);
     } catch (error) {
+      console.error('Logout error:', error);
       throw error;
     }
   };
 
   const value = {
     user,
+    userData,
     loading,
     signUp,
-    signIn,
-    logout,
+    login,
+    logout
   };
 
   return (
@@ -113,4 +136,4 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       {!loading && children}
     </AuthContext.Provider>
   );
-}; 
+} 

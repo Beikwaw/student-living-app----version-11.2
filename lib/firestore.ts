@@ -19,7 +19,7 @@ export interface UserData {
   id: string;
   email: string;
   name?: string;
-  role: 'user' | 'admin';
+  role: 'student' | 'admin';
   createdAt: Date;
   applicationStatus?: 'pending' | 'accepted' | 'denied';
   requestDetails?: {
@@ -29,7 +29,7 @@ export interface UserData {
   };
   communicationLog?: {
     message: string;
-    sentBy: 'admin' | 'user';
+    sentBy: 'admin' | 'student';
     timestamp: Date;
   }[];
 }
@@ -141,7 +141,7 @@ export const processRequest = async (
 export const addCommunication = async (
   userId: string,
   message: string,
-  sentBy: 'admin' | 'user'
+  sentBy: 'admin' | 'student'
 ) => {
   const userRef = doc(db, USERS_COLLECTION, userId);
   const now = new Date();

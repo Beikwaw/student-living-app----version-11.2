@@ -1,11 +1,9 @@
 'use client';
 
-export const dynamic = 'force-dynamic'
-
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { UserCircle, LogOut } from 'lucide-react';
+import { Shield, LogOut } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import Link from 'next/link';
 import { useToast } from "@/hooks/use-toast";
 
-export default function StudentLoginPage() {
+export default function AdminLoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const { toast } = useToast();
@@ -28,11 +26,11 @@ export default function StudentLoginPage() {
     const password = formData.get('password') as string;
 
     try {
-      await login(email, password, 'student');
-      router.push('/dashboard');
+      await login(email, password, 'admin');
+      router.push('/admin');
       toast({
         title: "Success",
-        description: "Welcome back!",
+        description: "Welcome back, Admin!",
       });
     } catch (error) {
       toast({
@@ -51,9 +49,9 @@ export default function StudentLoginPage() {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="bg-primary rounded-full w-8 h-8 flex items-center justify-center">
-              <UserCircle className="h-4 w-4 text-white" />
+              <Shield className="h-4 w-4 text-white" />
             </div>
-            <span className="font-bold text-xl">My Domain Student</span>
+            <span className="font-bold text-xl">My Domain Admin</span>
           </div>
           <Link href="/">
             <Button variant="ghost">
@@ -67,7 +65,7 @@ export default function StudentLoginPage() {
       <main className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Student Login</CardTitle>
+            <CardTitle className="text-2xl">Admin Login</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -77,7 +75,7 @@ export default function StudentLoginPage() {
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="student@example.com"
+                  placeholder="admin@mydomain.com"
                   required
                 />
               </div>

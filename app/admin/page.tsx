@@ -1,12 +1,16 @@
 'use client';
 
+export const dynamic = 'force-dynamic'
+
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { UserData, getPendingApplications, processRequest } from '../../lib/firestore';
 import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, AlertCircle, Calendar, Wrench, CheckCircle, XCircle } from 'lucide-react';
 
-export default function AdminDashboard() {
+export default function AdminDashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [pendingApplications, setPendingApplications] = useState<UserData[]>([]);
@@ -55,78 +59,118 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
-      
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Pending Applications ({pendingApplications.length})</h2>
-        
-        {pendingApplications.length === 0 ? (
-          <p className="text-gray-500">No pending applications</p>
-        ) : (
-          <div className="space-y-6">
-            {pendingApplications.map((application) => (
-              <div key={application.id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-medium">{application.name}</h3>
-                    <p className="text-gray-600">{application.email}</p>
-                    
-                    {application.requestDetails && (
-                      <div className="mt-2">
-                        <p><span className="font-medium">Accommodation Type:</span> {application.requestDetails.accommodationType}</p>
-                        <p><span className="font-medium">Location:</span> {application.requestDetails.location}</p>
-                        <p><span className="font-medium">Date Submitted:</span> {application.requestDetails.dateSubmitted.toLocaleDateString()}</p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="space-x-2">
-                    <button
-                      onClick={() => handleProcessApplication(
-                        application.id,
-                        'accepted',
-                        'Your application has been accepted. Welcome to MDO Student Living!'
-                      )}
-                      className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                    >
-                      Accept
-                    </button>
-                    <button
-                      onClick={() => handleProcessApplication(
-                        application.id,
-                        'denied',
-                        'We regret to inform you that your application has been denied at this time.'
-                      )}
-                      className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                    >
-                      Deny
-                    </button>
-                  </div>
-                </div>
-                
-                {application.communicationLog && application.communicationLog.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="font-medium mb-2">Communication History</h4>
-                    <div className="space-y-2">
-                      {application.communicationLog.map((log, index) => (
-                        <div key={index} className={`p-2 rounded ${
-                          log.sentBy === 'admin' ? 'bg-blue-100' : 'bg-gray-100'
-                        }`}>
-                          <p className="text-sm">{log.message}</p>
-                          <p className="text-xs text-gray-500">
-                            {log.sentBy === 'admin' ? 'Admin' : 'Student'} - {log.timestamp.toLocaleString()}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+
+      {/* Overview Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Users
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">150</div>
+            <p className="text-xs text-muted-foreground">
+              +12% from last month
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Active Complaints
+            </CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">8</div>
+            <p className="text-xs text-muted-foreground">
+              3 new today
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Pending Sleepovers
+            </CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">5</div>
+            <p className="text-xs text-muted-foreground">
+              2 new this week
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Maintenance Tasks
+            </CardTitle>
+            <Wrench className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">12</div>
+            <p className="text-xs text-muted-foreground">
+              4 in progress
+            </p>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <div className="bg-green-100 p-2 rounded-full">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">New user registration approved</p>
+                <p className="text-xs text-muted-foreground">2 minutes ago</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="bg-red-100 p-2 rounded-full">
+                <XCircle className="h-4 w-4 text-red-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Sleepover request rejected</p>
+                <p className="text-xs text-muted-foreground">15 minutes ago</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="bg-yellow-100 p-2 rounded-full">
+                <AlertCircle className="h-4 w-4 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">New complaint submitted</p>
+                <p className="text-xs text-muted-foreground">1 hour ago</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="bg-blue-100 p-2 rounded-full">
+                <Wrench className="h-4 w-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Maintenance task completed</p>
+                <p className="text-xs text-muted-foreground">2 hours ago</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 } 
